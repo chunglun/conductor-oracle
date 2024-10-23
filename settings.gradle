@@ -36,45 +36,28 @@ include 'server'
 include 'common'
 include 'core'
 include 'client'
-include 'client-spring'
 
-include 'cassandra-persistence'
 include 'redis-persistence'
-
-include 'es6-persistence'
 
 include 'redis-lock'
 
 include 'awss3-storage'
-include 'awssqs-event-queue'
-
-include 'redis-concurrency-limit'
 
 include 'json-jq-task'
 include 'http-task'
 
 include 'rest'
-include 'grpc'
-include 'grpc-server'
-include 'grpc-client'
-
-include 'java-sdk'
 
 // community modules
 include 'workflow-event-listener'
 include 'task-status-listener'
 include 'test-util'
-include 'kafka'
 include 'common-persistence'
 include 'mysql-persistence'
 include 'postgres-persistence'
 include 'metrics'
 include 'es7-persistence'
-include 'azureblob-storage'
 include 'postgres-external-storage'
-include 'amqp'
-include 'nats'
-include 'nats-streaming'
 
 include 'test-harness'
 

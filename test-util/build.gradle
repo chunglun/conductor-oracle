@@ -9,8 +9,6 @@ dependencies {
     compileOnly project(':conductor-server')
     implementation project(':conductor-client')
     implementation project(':conductor-rest')
-    implementation project(':conductor-grpc-server')
-    implementation project(':conductor-grpc-client')
     implementation project(':conductor-redis-persistence')
 
 
