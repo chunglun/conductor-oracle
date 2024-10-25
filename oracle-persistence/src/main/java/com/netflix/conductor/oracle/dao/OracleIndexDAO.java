@@ -81,31 +81,25 @@ public class OracleIndexDAO extends OracleBaseDAO implements IndexDAO {
 
     @Override
     public void indexWorkflow(WorkflowSummary workflow) {
-        String INSERT_WORKFLOW_INDEX_SQL = 
-                "MERGE INTO workflow_index w "
-                    + "USING (SELECT ? AS workflow_id, ? AS correlation_id, ? AS workflow_type, ? AS start_time, ? AS update_time, ? AS status, ? AS json_data FROM dual) src "
-                    + "ON (w.workflow_id = src.workflow_id) "
-                    + "WHEN MATCHED THEN UPDATE SET w.correlation_id = src.correlation_id, "
-                    + "                             w.workflow_type = src.workflow_type, "
-                    + "                             w.start_time = src.start_time, "
-                    + "                             w.update_time = src.update_time, "
-                    + "                             w.status = src.status, "
-                    + "                             w.json_data = src.json_data "
-                    + "WHERE src.update_time >= w.update_time ";
-                /*"INSERT INTO workflow_index (workflow_id, correlation_id, workflow_type, start_time, update_time, status, json_data)"
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?::JSONB) ON CONFLICT (workflow_id) \n"
-                        + "DO UPDATE SET correlation_id = EXCLUDED.correlation_id, workflow_type = EXCLUDED.workflow_type, "
-                        + "start_time = EXCLUDED.start_time, status = EXCLUDED.status, json_data = EXCLUDED.json_data "
-                        + "WHERE EXCLUDED.update_time >= workflow_index.update_time";*/
-
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("MERGE INTO workflow_index w ")
+                  .append("USING (SELECT ? AS workflow_id, ? AS correlation_id, ? AS workflow_type, ? AS start_time, ? AS update_time, ? AS status, ? AS json_data FROM dual) src ")
+                  .append("ON (w.workflow_id = src.workflow_id) ")
+                  .append("WHEN MATCHED THEN UPDATE SET ")
+                  .append("w.correlation_id = src.correlation_id, ")
+                  .append("w.workflow_type = src.workflow_type, ")
+                  .append("w.start_time = src.start_time, ")
+                  .append("w.update_time = src.update_time, ")
+                  .append("w.status = src.status, ")
+                  .append("w.json_data = src.json_data ")
+                  .append("WHERE src.update_time >= w.update_time ");
         if (onlyIndexOnStatusChange) {
-            INSERT_WORKFLOW_INDEX_SQL += "AND w.status != src.status ";
-            //" AND workflow_index.status != EXCLUDED.status";
+            sqlBuilder.append("AND w.status != src.status ");
         }
+        sqlBuilder.append("WHEN NOT MATCHED THEN INSERT (workflow_id, correlation_id, workflow_type, start_time, update_time, status, json_data) ")
+                  .append("VALUES (src.workflow_id, src.correlation_id, src.workflow_type, src.start_time, src.update_time, src.status, src.json_data) ");
 
-        INSERT_WORKFLOW_INDEX_SQL +=
-            "WHEN NOT MATCHED THEN INSERT (workflow_id, correlation_id, workflow_type, start_time, update_time, status, json_data) "
-                    + "VALUES (src.workflow_id, src.correlation_id, src.workflow_type, src.start_time, src.update_time, src.status, src.json_data) ";
+        String INSERT_WORKFLOW_INDEX_SQL = sqlBuilder.toString();
 
         TemporalAccessor updateTa = DateTimeFormatter.ISO_INSTANT.parse(workflow.getUpdateTime());
         Timestamp updateTime = Timestamp.from(Instant.from(updateTa));
@@ -158,29 +152,24 @@ public class OracleIndexDAO extends OracleBaseDAO implements IndexDAO {
 
     @Override
     public void indexTask(TaskSummary task) {
-        String INSERT_TASK_INDEX_SQL =
-                "MERGE INTO task_index t "
-                    + "USING (SELECT ? AS task_id, ? AS task_type, ? AS task_def_name, ? AS status, ? AS start_time, ? AS update_time, ? AS workflow_type, ? AS json_data FROM dual) src "
-                    + "ON (t.task_id = src.task_id) "
-                    + "WHEN MATCHED THEN UPDATE SET t.task_type = src.task_type, "
-                    + "                             t.task_def_name = src.task_def_name, "
-                    + "                             t.status = src.status, "
-                    + "                             t.update_time = src.update_time, "
-                    + "                             t.json_data = src.json_data "
-                    + "WHERE src.update_time >= t.update_time ";
-                /*"INSERT INTO task_index (task_id, task_type, task_def_name, status, start_time, update_time, workflow_type, json_data)"
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?::JSONB) ON CONFLICT (task_id) "
-                        + "DO UPDATE SET task_type = EXCLUDED.task_type, task_def_name = EXCLUDED.task_def_name, "
-                        + "status = EXCLUDED.status, update_time = EXCLUDED.update_time, json_data = EXCLUDED.json_data "
-                        + "WHERE EXCLUDED.update_time >= task_index.update_time";*/
-
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("MERGE INTO task_index t ")
+                  .append("USING (SELECT ? AS task_id, ? AS task_type, ? AS task_def_name, ? AS status, ? AS start_time, ? AS update_time, ? AS workflow_type, ? AS json_data FROM dual) src ")
+                  .append("ON (t.task_id = src.task_id) ")
+                  .append("WHEN MATCHED THEN UPDATE SET ")
+                  .append("t.task_type = src.task_type, ")
+                  .append("t.task_def_name = src.task_def_name, ")
+                  .append("t.status = src.status, ")
+                  .append("t.update_time = src.update_time, ")
+                  .append("t.json_data = src.json_data ")
+                  .append("WHERE src.update_time >= t.update_time ");
         if (onlyIndexOnStatusChange) {
-            INSERT_TASK_INDEX_SQL += "AND t.status != src.status ";  //" AND task_index.status != EXCLUDED.status";
+            sqlBuilder.append("AND t.status != src.status ");
         }
+        sqlBuilder.append("WHEN NOT MATCHED THEN INSERT (task_id, task_type, task_def_name, status, start_time, update_time, workflow_type, json_data) ")
+                  .append("VALUES (src.task_id, src.task_type, src.task_def_name, src.status, src.start_time, src.update_time, src.workflow_type, src.json_data) ");
 
-        INSERT_TASK_INDEX_SQL += 
-                "WHEN NOT MATCHED THEN INSERT (task_id, task_type, task_def_name, status, start_time, update_time, workflow_type, json_data) "
-                        + "VALUES (src.task_id, src.task_type, src.task_def_name, src.status, src.start_time, src.update_time, src.workflow_type, src.json_data) ";
+        String INSERT_TASK_INDEX_SQL = sqlBuilder.toString();
 
         TemporalAccessor updateTa = DateTimeFormatter.ISO_INSTANT.parse(task.getUpdateTime());
         Timestamp updateTime = Timestamp.from(Instant.from(updateTa));
@@ -323,9 +312,7 @@ public class OracleIndexDAO extends OracleBaseDAO implements IndexDAO {
 
     @Override
     public void removeTask(String workflowId, String taskId) {
-        String REMOVE_TASK_SQL =
-                "DELETE FROM task_execution_logs WHERE task_id = ?; " 
-                + "DELETE FROM task_index WHERE task_id = ?";
+        String REMOVE_TASK_SQL = "DELETE FROM task_execution_logs WHERE task_id = ?; DELETE FROM task_index WHERE task_id = ?";
                 //"WITH task_delete AS (DELETE FROM task_index WHERE task_id = ?)"
                 //        + "DELETE FROM task_execution_logs WHERE task_id =?";
 
