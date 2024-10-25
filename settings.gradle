@@ -59,6 +59,8 @@ include 'metrics'
 include 'es7-persistence'
 include 'postgres-external-storage'
 
+include 'oracle-persistence'
+
 include 'test-harness'
 
 
