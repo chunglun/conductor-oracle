@@ -33,10 +33,6 @@ public class OracleProperties {
     @DurationUnit(ChronoUnit.MILLIS)
     private Duration pollDataCacheValidityPeriod = Duration.ofMillis(0);
 
-    private boolean experimentalQueueNotify = false;
-
-    private Integer experimentalQueueNotifyStalePeriod = 5000;
-
     private boolean onlyIndexOnStatusChange = false;
 
     public String schema = "public";
