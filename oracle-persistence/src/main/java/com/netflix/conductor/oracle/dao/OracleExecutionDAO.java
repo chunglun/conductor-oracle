@@ -89,22 +89,17 @@ public class OracleExecutionDAO extends OracleBaseDAO
     public List<TaskModel> getPendingTasksByWorkflow(String taskDefName, String workflowId) {
         // @formatter:off
         String GET_IN_PROGRESS_TASKS_FOR_WORKFLOW =
-                "SELECT json_data FROM task_in_progress tip "
-                        + "INNER JOIN task t ON t.task_id = tip.task_id "
-                        + "WHERE task_def_name = ? AND workflow_id = ?";
-        // if intend to lock the selected rows
-        /*String GET_IN_PROGRESS_TASKS_FOR_WORKFLOW =
-                "SELECT json_data FROM task_in_progress tip "
-                        + "INNER JOIN task t ON t.task_id = tip.task_id "
-                        + "WHERE task_def_name = ? AND workflow_id = ? FOR UPDATE";*/
+            "SELECT json_data FROM task_in_progress tip "
+                    + "INNER JOIN task t ON t.task_id = tip.task_id "
+                    + "WHERE task_def_name = ? AND workflow_id = ?";
         // @formatter:on
 
         return queryWithTransaction(
-                GET_IN_PROGRESS_TASKS_FOR_WORKFLOW,
-                q ->
-                        q.addParameter(taskDefName)
-                                .addParameter(workflowId)
-                                .executeAndFetch(TaskModel.class));
+            GET_IN_PROGRESS_TASKS_FOR_WORKFLOW,
+            q ->
+                    q.addParameter(taskDefName)
+                     .addParameter(workflowId)
+                     .executeAndFetch(TaskModel.class));
     }
 
     @Override
@@ -279,9 +274,9 @@ public class OracleExecutionDAO extends OracleBaseDAO
         Preconditions.checkNotNull(taskName, "task name cannot be null");
         // @formatter:off
         String GET_IN_PROGRESS_TASKS_FOR_TYPE =
-                "SELECT json_data FROM task_in_progress tip "
-                        + "INNER JOIN task t ON t.task_id = tip.task_id "
-                        + "WHERE task_def_name = ?";
+                "SELECT tip.json_data FROM task_in_progress tip "
+                        + "JOIN task t ON t.task_id = tip.task_id "
+                        + "WHERE tip.task_def_name = ?";
         // @formatter:on
 
         return queryWithTransaction(
@@ -423,7 +418,7 @@ public class OracleExecutionDAO extends OracleBaseDAO
     @Override
     public long getInProgressTaskCount(String taskDefName) {
         String GET_IN_PROGRESS_TASK_COUNT =
-                "SELECT COUNT(*) FROM task_in_progress WHERE task_def_name = ? AND in_progress_status = true";
+                "SELECT COUNT(*) FROM task_in_progress WHERE task_def_name = ? AND in_progress_status = 'Y'";
 
         return queryWithTransaction(
                 GET_IN_PROGRESS_TASK_COUNT, q -> q.addParameter(taskDefName).executeCount());
@@ -471,8 +466,7 @@ public class OracleExecutionDAO extends OracleBaseDAO
                                             e);
                                 }
                             });
-                });
-
+                });         
         return workflows;
     }
 
@@ -515,7 +509,7 @@ public class OracleExecutionDAO extends OracleBaseDAO
                     "Unable to remove event execution " + eventExecution.getId(), e);
         }
     }
-
+    
     @Override
     public void updateEventExecution(EventExecution eventExecution) {
         try {
@@ -616,7 +610,7 @@ public class OracleExecutionDAO extends OracleBaseDAO
             boolean inProgress =
                     task.getStatus() != null
                             && task.getStatus().equals(TaskModel.Status.IN_PROGRESS);
-            updateInProgressStatus(connection, task, inProgress);
+            updateInProgressStatus(connection, task, inProgress ? "Y" : "N");
         }
 
         insertOrUpdateTaskData(connection, task);
@@ -673,7 +667,6 @@ public class OracleExecutionDAO extends OracleBaseDAO
 
         String EXISTS_PENDING_WORKFLOW =
                 "SELECT 1 FROM DUAL WHERE EXISTS(SELECT 1 FROM workflow_pending WHERE workflow_type = ? AND workflow_id = ?)";
-                //"SELECT EXISTS(SELECT 1 FROM workflow_pending WHERE workflow_type = ? AND workflow_id = ?)";
 
         boolean exists =
                 query(
@@ -684,7 +677,6 @@ public class OracleExecutionDAO extends OracleBaseDAO
         if (!exists) {
             String INSERT_PENDING_WORKFLOW =
                     "INSERT INTO workflow_pending (workflow_type, workflow_id) VALUES (?, ?)";
-                    //"INSERT INTO workflow_pending (workflow_type, workflow_id) VALUES (?, ?) ON CONFLICT (workflow_type,workflow_id) DO NOTHING";
 
             execute(
                     connection,
@@ -740,7 +732,6 @@ public class OracleExecutionDAO extends OracleBaseDAO
 
         String EXISTS_WORKFLOW_TO_TASK =
                 "SELECT 1 FROM DUAL WHERE EXISTS(SELECT 1 FROM workflow_to_task WHERE workflow_id = ? AND task_id = ?)";
-                //"SELECT EXISTS(SELECT 1 FROM workflow_to_task WHERE workflow_id = ? AND task_id = ?)";
 
         boolean exists =
                 query(
@@ -754,7 +745,6 @@ public class OracleExecutionDAO extends OracleBaseDAO
         if (!exists) {
             String INSERT_WORKFLOW_TO_TASK =
                     "INSERT INTO workflow_to_task (workflow_id, task_id) VALUES (?, ?)";
-                    //"INSERT INTO workflow_to_task (workflow_id, task_id) VALUES (?, ?) ON CONFLICT (workflow_id,task_id) DO NOTHING";
 
             execute(
                     connection,
@@ -812,7 +802,6 @@ public class OracleExecutionDAO extends OracleBaseDAO
 
         final String EXISTS_SCHEDULED_TASK =
                 "SELECT 1 FROM DUAL WHERE EXISTS(SELECT 1 FROM task_scheduled where workflow_id = ? AND task_key = ?)";
-                //"SELECT EXISTS(SELECT 1 FROM task_scheduled where workflow_id = ? AND task_key = ?)";
 
         boolean exists =
                 query(
@@ -826,7 +815,6 @@ public class OracleExecutionDAO extends OracleBaseDAO
         if (!exists) {
             final String INSERT_IGNORE_SCHEDULED_TASK =
                     "INSERT INTO task_scheduled (workflow_id, task_key, task_id) VALUES (?, ?, ?)";
-                    //"INSERT INTO task_scheduled (workflow_id, task_key, task_id) VALUES (?, ?, ?) ON CONFLICT (workflow_id,task_key) DO NOTHING";
 
             int count =
                     query(
@@ -858,7 +846,6 @@ public class OracleExecutionDAO extends OracleBaseDAO
     private void addTaskInProgress(Connection connection, TaskModel task) {
         String EXISTS_IN_PROGRESS_TASK =
                 "SELECT 1 FROM DUAL WHERE EXISTS(SELECT 1 FROM task_in_progress WHERE task_def_name = ? AND task_id = ?)";
-                //"SELECT EXISTS(SELECT 1 FROM task_in_progress WHERE task_def_name = ? AND task_id = ?)";
 
         boolean exists =
                 query(
@@ -917,7 +904,6 @@ public class OracleExecutionDAO extends OracleBaseDAO
         String INSERT_EVENT_EXECUTION =
                 "INSERT INTO event_execution (event_handler_name, event_name, message_id, execution_id, json_data) "
                         + "VALUES (?, ?, ?, ?, ?) ";
-                        //+ "ON CONFLICT DO NOTHING";
         int count =
                 query(
                         connection,
@@ -1003,7 +989,8 @@ public class OracleExecutionDAO extends OracleBaseDAO
     private List<String> findAllTasksInProgressInOrderOfArrival(TaskModel task, int limit) {
         String GET_IN_PROGRESS_TASKS_WITH_LIMIT =
                 "SELECT task_id FROM ( SELECT task_id FROM task_in_progress WHERE task_def_name = ? ORDER BY created_on ) WHERE ROWNUM <= ?";
-                //"SELECT task_id FROM task_in_progress WHERE task_def_name = ? ORDER BY created_on LIMIT ?";
+                //Postgres:     "SELECT task_id FROM task_in_progress WHERE task_def_name = ? ORDER BY created_on LIMIT ?";
+                //MLI02-Oracle: "SELECT task_id FROM task_in_progress WHERE task_def_name = ? AND ROWNUM <= ? ORDER BY created_on";
 
         return queryWithTransaction(
                 GET_IN_PROGRESS_TASKS_WITH_LIMIT,
@@ -1012,6 +999,7 @@ public class OracleExecutionDAO extends OracleBaseDAO
                                 .addParameter(limit)
                                 .executeScalarList(String.class));
     }
+
 
     private void validate(TaskModel task) {
         Preconditions.checkNotNull(task, "task object cannot be null");
