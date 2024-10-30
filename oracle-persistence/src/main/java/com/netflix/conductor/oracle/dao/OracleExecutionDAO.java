@@ -988,7 +988,8 @@ public class OracleExecutionDAO extends OracleBaseDAO
 
     private List<String> findAllTasksInProgressInOrderOfArrival(TaskModel task, int limit) {
         String GET_IN_PROGRESS_TASKS_WITH_LIMIT =
-                "SELECT task_id FROM ( SELECT task_id FROM task_in_progress WHERE task_def_name = ? ORDER BY created_on ) WHERE ROWNUM <= ?";
+                "SELECT task_id FROM task_in_progress WHERE task_def_name = ? ORDER BY created_on FETCH FIRST ? ROWS ONLY";
+                //"SELECT task_id FROM ( SELECT task_id FROM task_in_progress WHERE task_def_name = ? ORDER BY created_on ) WHERE ROWNUM <= ?";
                 //Postgres:     "SELECT task_id FROM task_in_progress WHERE task_def_name = ? ORDER BY created_on LIMIT ?";
                 //MLI02-Oracle: "SELECT task_id FROM task_in_progress WHERE task_def_name = ? AND ROWNUM <= ? ORDER BY created_on";
 
