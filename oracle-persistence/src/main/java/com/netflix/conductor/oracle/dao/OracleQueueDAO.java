@@ -189,7 +189,6 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
 
         final String UPDATE_UNACK_TIMEOUT =
                 "UPDATE queue_message SET offset_time_seconds = ?, deliver_on = (CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'SECOND')) WHERE queue_name = ? AND message_id = ?";
-                //"UPDATE queue_message SET offset_time_seconds = ?, deliver_on = (current_timestamp + (? ||' seconds')::interval) WHERE queue_name = ? AND message_id = ?";
 
         return queryWithTransaction(
                         UPDATE_UNACK_TIMEOUT,
@@ -212,7 +211,6 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
     public Map<String, Long> queuesDetail() {
         final String GET_QUEUES_DETAIL =
                 "SELECT queue_name, (SELECT count(*) FROM queue_message WHERE popped = 'N' AND queue_name = q.queue_name) FROM queue q";
-                //"SELECT queue_name, (SELECT count(*) FROM queue_message WHERE popped = false AND queue_name = q.queue_name) AS size FROM queue q FOR SHARE SKIP LOCKED";
         return queryWithTransaction(
                 GET_QUEUES_DETAIL,
                 q ->
@@ -236,10 +234,6 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
                         + "       (SELECT count(*) FROM queue_message WHERE popped = 'N' AND queue_name = q.queue_name),\n"
                         + "       (SELECT count(*) FROM queue_message WHERE popped = 'Y' AND queue_name = q.queue_name)\n"
                         + "FROM queue q";
-                /*"SELECT queue_name, \n"
-                        + "       (SELECT count(*) FROM queue_message WHERE popped = false AND queue_name = q.queue_name) AS size,\n"
-                        + "       (SELECT count(*) FROM queue_message WHERE popped = true AND queue_name = q.queue_name) AS uacked \n"
-                        + "FROM queue q FOR SHARE SKIP LOCKED";*/
         // @formatter:on
 
         return queryWithTransaction(
@@ -283,7 +277,7 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
                 tx -> {
                     String LOCK_TASKS =
                             "SELECT queue_name, message_id FROM queue_message WHERE popped = 'Y' AND (deliver_on + NUMTODSINTERVAL(60, 'SECOND')) < CURRENT_TIMESTAMP AND ROWNUM <= 1000 ";
-                            //"SELECT queue_name, message_id FROM queue_message WHERE popped = true AND (deliver_on + (60 ||' seconds')::interval)  <  current_timestamp limit 1000 FOR UPDATE SKIP LOCKED";
+                            //Postgres: "SELECT queue_name, message_id FROM queue_message WHERE popped = true AND (deliver_on + (60 ||' seconds')::interval)  <  current_timestamp limit 1000 FOR UPDATE SKIP LOCKED";
                     List<QueueMessage> messages =
                             query(
                                     tx,
@@ -353,7 +347,6 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
     public void processUnacks(String queueName) {
         final String PROCESS_UNACKS =
                 "UPDATE queue_message SET popped = 'N' WHERE queue_name = ? AND popped = 'Y' AND (CURRENT_TIMESTAMP - NUMTODSINTERVAL(60, 'SECOND'))  > deliver_on";
-                //"UPDATE queue_message SET popped = false WHERE queue_name = ? AND popped = true AND (current_timestamp - (60 ||' seconds')::interval)  > deliver_on";
         executeWithTransaction(PROCESS_UNACKS, q -> q.addParameter(queueName).executeUpdate());
     }
 
@@ -363,8 +356,6 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
         final String SET_OFFSET_TIME =
                 "UPDATE queue_message SET offset_time_seconds = ?, deliver_on = (CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'SECOND')) \n"
                         + "WHERE queue_name = ? AND message_id = ?";
-                //"UPDATE queue_message SET offset_time_seconds = ?, deliver_on = (current_timestamp + (? ||' seconds')::interval) \n"
-                //        + "WHERE queue_name = ? AND message_id = ?";
 
         return queryWithTransaction(
                 SET_OFFSET_TIME,
@@ -380,7 +371,6 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
     private boolean existsMessage(Connection connection, String queueName, String messageId) {
         final String EXISTS_MESSAGE =
                 "SELECT 1 FROM DUAL WHERE EXISTS(SELECT 1 FROM queue_message WHERE queue_name = ? AND message_id = ?)";
-                //"SELECT EXISTS(SELECT 1 FROM queue_message WHERE queue_name = ? AND message_id = ?) FOR SHARE";
         return query(
                 connection,
                 EXISTS_MESSAGE,
@@ -399,7 +389,6 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
 
         String UPDATE_MESSAGE =
                 "UPDATE queue_message SET payload=?, deliver_on=(CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'SECOND')) WHERE queue_name = ? AND message_id = ?";
-                //"UPDATE queue_message SET payload=?, deliver_on=(current_timestamp + (? ||' seconds')::interval) WHERE queue_name = ? AND message_id = ?";
         int rowsUpdated =
                 query(
                         connection,
@@ -414,7 +403,6 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
         if (rowsUpdated == 0) {
             String PUSH_MESSAGE =
                     "INSERT INTO queue_message (deliver_on, queue_name, message_id, priority, offset_time_seconds, payload) VALUES ((CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'SECOND')), ?, ?, ?, ?, ?)";
-                    //"INSERT INTO queue_message (deliver_on, queue_name, message_id, priority, offset_time_seconds, payload) VALUES ((current_timestamp + (? ||' seconds')::interval), ?,?,?,?,?) ON CONFLICT (queue_name,message_id) DO UPDATE SET payload=excluded.payload, deliver_on=excluded.deliver_on";
             execute(
                     connection,
                     PUSH_MESSAGE,
@@ -438,24 +426,20 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
                 q -> q.addParameter(queueName).addParameter(messageId).executeDelete());
     }
 
-    private List<Message> popMessages(
-            Connection connection, String queueName, int count, int timeout) {
-        String POP_QUERY =
-                "UPDATE queue_message SET popped = 'Y' WHERE message_id IN ("
-                        + "SELECT message_id FROM ("
-                        + "    SELECT message_id FROM queue_message WHERE queue_name = ? AND popped = 'N' AND (deliver_on + NUMTODSINTERVAL(1000, 'MICROSECOND')) <= CURRENT_TIMESTAMP "
-                        + "    ORDER BY priority DESC, deliver_on, created_on ) WHERE ROWNUM <= ? "
-                        + ") RETURNING message_id, priority, payload INTO :message_id, :priority, :payload";
-                
-                /*"UPDATE queue_message SET popped = true WHERE message_id IN ("
-                        + "SELECT message_id FROM queue_message WHERE queue_name = ? AND popped = false AND "
-                        + "deliver_on <= (current_timestamp + (1000 ||' microseconds')::interval) "
-                        + "ORDER BY priority DESC, deliver_on, created_on LIMIT ? FOR UPDATE SKIP LOCKED"
-                        + ") RETURNING message_id, priority, payload";*/
-  
+    private List<Message> peekMessages(Connection connection, String queueName, int count) {
+        if (count < 1) {
+            return Collections.emptyList();
+        }
+        final String PEEK_MESSAGES =
+                "SELECT message_id, priority, payload FROM queue_message "
+                        + "WHERE queue_name = ? AND popped = 'N' AND deliver_on <= (CURRENT_TIMESTAMP + NUMTODSINTERVAL(1/1000000, 'SECOND')) "
+                        + "ORDER BY priority DESC, deliver_on, created_on FETCH FIRST ? ROWS ONLY ";
+                //MLID-02: "SELECT message_id, priority, payload FROM queue_message WHERE queue_name = ? AND popped = 'N' AND deliver_on <= (CURRENT_TIMESTAMP + NUMTODSINTERVAL(1/1000000,'SECOND')) AND ROWNUM <= ? ORDER BY priority DESC, deliver_on, created_on";
+                //MySQL: "SELECT message_id, priority, payload FROM queue_message WHERE queue_name = ? AND popped = false AND deliver_on <= TIMESTAMPADD(MICROSECOND, 1000, CURRENT_TIMESTAMP) ORDER BY priority DESC, deliver_on, created_on LIMIT ?";
+
         return query(
                 connection,
-                POP_QUERY,
+                PEEK_MESSAGES,
                 p ->
                         p.addParameter(queueName)
                                 .addParameter(count)
@@ -473,6 +457,40 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
                                         }));
     }
 
+    private List<Message> popMessages(
+            Connection connection, String queueName, int count, int timeout) {
+        long start = System.currentTimeMillis();
+        List<Message> messages = peekMessages(connection, queueName, count);
+        
+        while (messages.size() < count && ((System.currentTimeMillis() - start) < timeout)) {
+                Uninterruptibles.sleepUninterruptibly(200, TimeUnit.MILLISECONDS);
+                messages = peekMessages(connection, queueName, count);
+        }
+        
+        if (messages.isEmpty()) {
+                return messages;
+        }
+        
+        List<Message> poppedMessages = new ArrayList<>();
+        for (Message message : messages) {
+            final String POP_MESSAGE =
+                    "UPDATE queue_message SET popped = 'Y' WHERE queue_name = ? AND message_id = ? AND popped = 'N'";
+            int result =
+                    query(
+                            connection,
+                            POP_MESSAGE,
+                            q ->
+                                    q.addParameter(queueName)
+                                            .addParameter(message.getId())
+                                            .executeUpdate());
+
+            if (result == 1) {
+                poppedMessages.add(message);
+            }
+        }
+        return poppedMessages;
+    }
+
     @Override
     public boolean containsMessage(String queueName, String messageId) {
         return getWithRetriedTransactions(tx -> existsMessage(tx, queueName, messageId));
@@ -482,12 +500,10 @@ public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
         logger.trace("Creating new queue '{}'", queueName);
         final String EXISTS_QUEUE =
                 "SELECT 1 FROM DUAL WHERE EXISTS(SELECT 1 FROM queue WHERE queue_name = ?)";
-               // "SELECT EXISTS(SELECT 1 FROM queue WHERE queue_name = ?) FOR SHARE";
         boolean exists = query(connection, EXISTS_QUEUE, q -> q.addParameter(queueName).exists());
         if (!exists) {
             final String CREATE_QUEUE =
                     "INSERT INTO queue (queue_name) VALUES (?)";
-                    //"INSERT INTO queue (queue_name) VALUES (?) ON CONFLICT (queue_name) DO NOTHING";
             execute(connection, CREATE_QUEUE, q -> q.addParameter(queueName).executeUpdate());
         }
     }
