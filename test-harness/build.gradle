@@ -5,7 +5,6 @@ dependencies {
     testImplementation project(':conductor-common')
     testImplementation project(':conductor-rest')
     testImplementation project(':conductor-core')
-    testImplementation project(':conductor-redis-persistence')
     testImplementation project(':conductor-es7-persistence')
     testImplementation project(':conductor-client')
     testImplementation project(':conductor-json-jq-task')

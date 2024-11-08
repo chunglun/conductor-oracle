@@ -23,10 +23,8 @@ dependencies {
 
     //External Payload Storage
     implementation project(':conductor-postgres-external-storage')
-    implementation project(':conductor-awss3-storage')
 
     //Persistence
-    implementation project(':conductor-redis-persistence')
     implementation project(':conductor-postgres-persistence')
 
     //Indexing (note: Elasticsearch 6 is deprecated)

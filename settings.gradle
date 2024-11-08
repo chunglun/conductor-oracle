@@ -37,11 +37,7 @@ include 'common'
 include 'core'
 include 'client'
 
-include 'redis-persistence'
-
 include 'redis-lock'
-
-include 'awss3-storage'
 
 include 'json-jq-task'
 include 'http-task'

@@ -9,8 +9,6 @@ dependencies {
     compileOnly project(':conductor-server')
     implementation project(':conductor-client')
     implementation project(':conductor-rest')
-    implementation project(':conductor-redis-persistence')
-
 
     implementation "com.fasterxml.jackson.core:jackson-databind"
     implementation "com.fasterxml.jackson.core:jackson-core"
