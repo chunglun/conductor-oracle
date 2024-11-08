@@ -22,7 +22,6 @@ dependencies {
     //Event Systems
 
     //External Payload Storage
-    implementation project(':conductor-postgres-external-storage')
 
     //Persistence
     implementation project(':conductor-postgres-persistence')
