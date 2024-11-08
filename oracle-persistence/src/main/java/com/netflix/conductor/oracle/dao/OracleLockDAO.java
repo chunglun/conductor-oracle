@@ -44,9 +44,14 @@ public class OracleLockDAO extends OracleBaseDAO implements Lock {
     public boolean acquireLock(String lockId, long timeToTry, long leaseTime, TimeUnit unit) {
         long endTime = System.currentTimeMillis() + unit.toMillis(timeToTry);
         while (System.currentTimeMillis() < endTime) {
-            var sql = "INSERT INTO locks (lock_id, lease_expiration) VALUES (?, (CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'MILLISECOND')))";
-            //"INSERT INTO locks(lock_id, lease_expiration) VALUES (?, now() + (?::text || ' milliseconds')::interval) ON CONFLICT (lock_id) DO UPDATE SET lease_expiration = EXCLUDED.lease_expiration WHERE locks.lease_expiration <= now()";
-
+            StringBuilder sqlBuilder = new StringBuilder("MERGE INTO locks l ");
+            sqlBuilder.append("USING ( SELECT ? AS lock_id, CURRENT_TIMESTAMP + NUMTODSINTERVAL(?, 'MILLISECOND') AS lease_expiration ) src ");
+            sqlBuilder.append("ON (l.lock_id = src.lock_id) ");
+            sqlBuilder.append("WHEN MATCHED AND l.lease_expiration <= CURRENT_TIMESTAMP THEN ");
+            sqlBuilder.append("UPDATE SET l.lease_expiration = src.lease_expiration ");
+            sqlBuilder.append("WHEN NOT MATCHED THEN ");
+            sqlBuilder.append("INSERT (lock_id, lease_expiration) VALUES (src.lock_id, src.lease_expiration) ");
+            var sql = sqlBuilder.toString();
             int rowsAffected =
                     queryWithTransaction(
                             sql,
