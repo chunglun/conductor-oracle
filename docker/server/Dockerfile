@@ -57,7 +57,8 @@ RUN apk add curl
 RUN mkdir -p /app/config /app/logs /app/libs
 
 # Copy the compiled output to new image
-COPY docker/server/bin /app
+# COPY docker/server/bin /app
+COPY docker/server/script /app
 COPY docker/server/config /app/config
 COPY --from=builder /conductor/server/build/libs/*boot*.jar /app/libs/conductor-server.jar
 

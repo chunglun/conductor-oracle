@@ -153,6 +153,7 @@ public class ElasticSearchRestDAOV7 extends ElasticSearchBaseDAO implements Inde
         this.logIndexPrefix = this.indexPrefix + "_" + LOG_DOC_TYPE;
         this.messageIndexPrefix = this.indexPrefix + "_" + MSG_DOC_TYPE;
         this.eventIndexPrefix = this.indexPrefix + "_" + EVENT_DOC_TYPE;
+
         int workerQueueSize = properties.getAsyncWorkerQueueSize();
         int maximumPoolSize = properties.getAsyncMaxPoolSize();
 
