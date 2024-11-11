@@ -13,16 +13,17 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-core"
 
     implementation "org.apache.commons:commons-lang3"
-    implementation "org.postgresql:postgresql:${revPostgres}"
+    implementation "com.oracle.database.jdbc:ojdbc8"
     implementation "org.springframework.boot:spring-boot-starter-jdbc"
     implementation "org.flywaydb:flyway-core:${revFlyway}"
-    implementation "org.flywaydb:flyway-database-postgresql:${revFlyway}"
+    implementation "org.flywaydb:flyway-database-oracle" // Will only be used for JUnits. Superceding 6+ version will takeover in runtime
 
     testImplementation "org.apache.groovy:groovy-all:${revGroovy}"
     testImplementation project(':conductor-server')
     testImplementation project(':conductor-client')
 
-    //testImplementation "org.testcontainers:oracle:${revTestContainer}"
+    testImplementation "org.flywaydb:flyway-database-oracle" // Downgraded to support Unit Tests on Oracle 11G. Will be reverted after Github Actions support 18C XE based CICD.
+    testImplementation "org.testcontainers:oracle-xe:${revTestContainer}"
     testImplementation project(':conductor-test-util').sourceSets.test.output
     testImplementation project(':conductor-common-persistence').sourceSets.test.output
 }

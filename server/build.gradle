@@ -24,12 +24,10 @@ dependencies {
     //External Payload Storage
 
     //Persistence
-    implementation project(':conductor-postgres-persistence')
+    implementation project(':conductor-oracle-persistence')
 
     //Indexing (note: Elasticsearch 6 is deprecated)
     implementation project(':conductor-es7-persistence')
-
-    implementation project(':conductor-redis-lock')
 
     //System Tasks
     implementation project(':conductor-http-task')

@@ -47,22 +47,6 @@ public class OracleProperties {
     /** The size of the queue used for holding async indexing tasks */
     private int asyncWorkerQueueSize = 100;
 
-    public boolean getExperimentalQueueNotify() {
-        return experimentalQueueNotify;
-    }
-
-    public void setExperimentalQueueNotify(boolean experimentalQueueNotify) {
-        this.experimentalQueueNotify = experimentalQueueNotify;
-    }
-
-    public Integer getExperimentalQueueNotifyStalePeriod() {
-        return experimentalQueueNotifyStalePeriod;
-    }
-
-    public void setExperimentalQueueNotifyStalePeriod(Integer experimentalQueueNotifyStalePeriod) {
-        this.experimentalQueueNotifyStalePeriod = experimentalQueueNotifyStalePeriod;
-    }
-
     public Duration getTaskDefCacheRefreshInterval() {
         return taskDefCacheRefreshInterval;
     }

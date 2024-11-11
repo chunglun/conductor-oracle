@@ -37,8 +37,6 @@ include 'common'
 include 'core'
 include 'client'
 
-include 'redis-lock'
-
 include 'json-jq-task'
 include 'http-task'
 
@@ -49,10 +47,8 @@ include 'workflow-event-listener'
 include 'task-status-listener'
 include 'test-util'
 include 'common-persistence'
-include 'postgres-persistence'
 include 'metrics'
 include 'es7-persistence'
-
 include 'oracle-persistence'
 
 include 'test-harness'

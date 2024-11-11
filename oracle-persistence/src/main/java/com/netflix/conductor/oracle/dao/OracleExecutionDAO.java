@@ -884,7 +884,7 @@ public class OracleExecutionDAO extends OracleBaseDAO
                                 .executeUpdate());
     }
 
-    private void updateInProgressStatus(Connection connection, TaskModel task, boolean inProgress) {
+    private void updateInProgressStatus(Connection connection, TaskModel task, String inProgress) {
         String UPDATE_IN_PROGRESS_TASK_STATUS =
                 "UPDATE task_in_progress SET in_progress_status = ?, modified_on = CURRENT_TIMESTAMP "
                         + "WHERE task_def_name = ? AND task_id = ?";

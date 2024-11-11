@@ -54,7 +54,7 @@ public class OracleIndexDAO extends OracleBaseDAO implements IndexDAO {
             RetryTemplate retryTemplate,
             ObjectMapper objectMapper,
             DataSource dataSource,
-            PostgresProperties properties) {
+            OracleProperties properties) {
         super(retryTemplate, objectMapper, dataSource);
         this.properties = properties;
         this.onlyIndexOnStatusChange = properties.getOnlyIndexOnStatusChange();

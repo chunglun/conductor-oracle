@@ -35,7 +35,7 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
 import jakarta.annotation.*;
 
-public class OracleQueueDAO extends OracleBaseDAO implements OracleDAO {
+public class OracleQueueDAO extends OracleBaseDAO implements QueueDAO {
 
     private static final Long UNACK_SCHEDULE_MS = 60_000L;
 

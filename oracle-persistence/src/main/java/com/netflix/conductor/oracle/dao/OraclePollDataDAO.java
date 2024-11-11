@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import jakarta.annotation.PostConstruct;
 
-public class OraclePollDataDAO extends OracleBaseDAO implements OracleDataDAO {
+public class OraclePollDataDAO extends OracleBaseDAO implements PollDataDAO {
 
     private ConcurrentHashMap<String, ConcurrentHashMap<String, PollData>> pollDataCache =
             new ConcurrentHashMap<>();
@@ -50,7 +50,7 @@ public class OraclePollDataDAO extends OracleBaseDAO implements OracleDataDAO {
             RetryTemplate retryTemplate,
             ObjectMapper objectMapper,
             DataSource dataSource,
-            PostgresProperties properties) {
+            OracleProperties properties) {
         super(retryTemplate, objectMapper, dataSource);
         this.pollDataFlushInterval = properties.getPollDataFlushInterval().toMillis();
         if (this.pollDataFlushInterval > 0) {
