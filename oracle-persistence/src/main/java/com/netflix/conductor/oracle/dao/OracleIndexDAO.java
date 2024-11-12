@@ -262,27 +262,27 @@ public class OracleIndexDAO extends OracleBaseDAO implements IndexDAO {
 
     @Override
     public CompletableFuture<Void> asyncIndexWorkflow(WorkflowSummary workflow) {
-        logger.info("asyncIndexWorkflow is not supported for postgres indexing");
+        logger.info("asyncIndexWorkflow is not supported for oracle indexing");
         return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public CompletableFuture<Void> asyncIndexTask(TaskSummary task) {
-        logger.info("asyncIndexTask is not supported for postgres indexing");
+        logger.info("asyncIndexTask is not supported for oracle indexing");
         return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public SearchResult<String> searchWorkflows(
             String query, String freeText, int start, int count, List<String> sort) {
-        logger.info("searchWorkflows is not supported for postgres indexing");
+        logger.info("searchWorkflows is not supported for oracle indexing");
         return null;
     }
 
     @Override
     public SearchResult<String> searchTasks(
             String query, String freeText, int start, int count, List<String> sort) {
-        logger.info("searchTasks is not supported for postgres indexing");
+        logger.info("searchTasks is not supported for oracle indexing");
         return null;
     }
 
@@ -300,13 +300,13 @@ public class OracleIndexDAO extends OracleBaseDAO implements IndexDAO {
 
     @Override
     public void updateWorkflow(String workflowInstanceId, String[] keys, Object[] values) {
-        logger.info("updateWorkflow is not supported for postgres indexing");
+        logger.info("updateWorkflow is not supported for oracle indexing");
     }
 
     @Override
     public CompletableFuture<Void> asyncUpdateWorkflow(
             String workflowInstanceId, String[] keys, Object[] values) {
-        logger.info("asyncUpdateWorkflow is not supported for postgres indexing");
+        logger.info("asyncUpdateWorkflow is not supported for oracle indexing");
         return CompletableFuture.completedFuture(null);
     }
 
@@ -327,70 +327,70 @@ public class OracleIndexDAO extends OracleBaseDAO implements IndexDAO {
 
     @Override
     public void updateTask(String workflowId, String taskId, String[] keys, Object[] values) {
-        logger.info("updateTask is not supported for postgres indexing");
+        logger.info("updateTask is not supported for oracle indexing");
     }
 
     @Override
     public CompletableFuture<Void> asyncUpdateTask(
             String workflowId, String taskId, String[] keys, Object[] values) {
-        logger.info("asyncUpdateTask is not supported for postgres indexing");
+        logger.info("asyncUpdateTask is not supported for oracle indexing");
         return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public String get(String workflowInstanceId, String key) {
-        logger.info("get is not supported for postgres indexing");
+        logger.info("get is not supported for oracle indexing");
         return null;
     }
 
     @Override
     public CompletableFuture<Void> asyncAddTaskExecutionLogs(List<TaskExecLog> logs) {
-        logger.info("asyncAddTaskExecutionLogs is not supported for postgres indexing");
+        logger.info("asyncAddTaskExecutionLogs is not supported for oracle indexing");
         return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public void addEventExecution(EventExecution eventExecution) {
-        logger.info("addEventExecution is not supported for postgres indexing");
+        logger.info("addEventExecution is not supported for oracle indexing");
     }
 
     @Override
     public List<EventExecution> getEventExecutions(String event) {
-        logger.info("getEventExecutions is not supported for postgres indexing");
+        logger.info("getEventExecutions is not supported for oracle indexing");
         return null;
     }
 
     @Override
     public CompletableFuture<Void> asyncAddEventExecution(EventExecution eventExecution) {
-        logger.info("asyncAddEventExecution is not supported for postgres indexing");
+        logger.info("asyncAddEventExecution is not supported for oracle indexing");
         return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public void addMessage(String queue, Message msg) {
-        logger.info("addMessage is not supported for postgres indexing");
+        logger.info("addMessage is not supported for oracle indexing");
     }
 
     @Override
     public CompletableFuture<Void> asyncAddMessage(String queue, Message message) {
-        logger.info("asyncAddMessage is not supported for postgres indexing");
+        logger.info("asyncAddMessage is not supported for oracle indexing");
         return CompletableFuture.completedFuture(null);
     }
 
     @Override
     public List<Message> getMessages(String queue) {
-        logger.info("getMessages is not supported for postgres indexing");
+        logger.info("getMessages is not supported for oracle indexing");
         return null;
     }
 
     @Override
     public List<String> searchArchivableWorkflows(String indexName, long archiveTtlDays) {
-        logger.info("searchArchivableWorkflows is not supported for postgres indexing");
+        logger.info("searchArchivableWorkflows is not supported for oracle indexing");
         return null;
     }
 
     public long getWorkflowCount(String query, String freeText) {
-        logger.info("getWorkflowCount is not supported for postgres indexing");
+        logger.info("getWorkflowCount is not supported for oracle indexing");
         return 0;
     }
 }

@@ -27,7 +27,7 @@ dependencies {
     implementation project(':conductor-oracle-persistence')
 
     //Indexing (note: Elasticsearch 6 is deprecated)
-    implementation project(':conductor-es7-persistence')
+    //implementation project(':conductor-es7-persistence')
 
     //System Tasks
     implementation project(':conductor-http-task')
@@ -47,8 +47,8 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-log4j2'
     implementation 'org.apache.logging.log4j:log4j-web'
-    implementation "redis.clients:jedis:${revJedis}"
-    implementation "org.postgresql:postgresql:${revPostgres}"
+    //implementation "redis.clients:jedis:${revJedis}"
+    //implementation "org.postgresql:postgresql:${revPostgres}"
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation ("io.orkes.queues:orkes-conductor-queues:${revOrkesQueues}") {

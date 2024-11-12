@@ -5,7 +5,7 @@ dependencies {
     testImplementation project(':conductor-common')
     testImplementation project(':conductor-rest')
     testImplementation project(':conductor-core')
-    testImplementation project(':conductor-es7-persistence')
+    //testImplementation project(':conductor-es7-persistence')
     testImplementation project(':conductor-client')
     testImplementation project(':conductor-json-jq-task')
     testImplementation project(':conductor-http-task')
@@ -21,17 +21,17 @@ dependencies {
     testImplementation "com.google.guava:guava:${revGuava}"
     testImplementation "org.springframework:spring-web"
 
-    testImplementation "redis.clients:jedis:${revJedis}"
-    testImplementation "com.netflix.dyno-queues:dyno-queues-redis:${revDynoQueues}"
+    //testImplementation "redis.clients:jedis:${revJedis}"
+    //testImplementation "com.netflix.dyno-queues:dyno-queues-redis:${revDynoQueues}"
 
     testImplementation "org.apache.groovy:groovy-all:${revGroovy}"
     testImplementation "org.spockframework:spock-core:${revSpock}"
     testImplementation "org.spockframework:spock-spring:${revSpock}"
 
-    testImplementation "org.elasticsearch.client:elasticsearch-rest-client:${revElasticSearch7}"
-    testImplementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:${revElasticSearch7}"
+    //testImplementation "org.elasticsearch.client:elasticsearch-rest-client:${revElasticSearch7}"
+    //testImplementation "org.elasticsearch.client:elasticsearch-rest-high-level-client:${revElasticSearch7}"
 
-    testImplementation "org.testcontainers:elasticsearch:${revTestContainer}"
+    //testImplementation "org.testcontainers:elasticsearch:${revTestContainer}"
     testImplementation('junit:junit:4.13.2')
     testImplementation "org.junit.vintage:junit-vintage-engine"
     testImplementation "jakarta.ws.rs:jakarta.ws.rs-api:${revJAXRS}"

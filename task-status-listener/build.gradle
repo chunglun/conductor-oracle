@@ -18,6 +18,6 @@ dependencies {
     testImplementation project(':conductor-test-util').sourceSets.test.output
 
     //In memory
-    implementation "org.rarefiedredis.redis:redis-java:${revRarefiedRedis}"
+    //implementation "org.rarefiedredis.redis:redis-java:${revRarefiedRedis}"
 
 }

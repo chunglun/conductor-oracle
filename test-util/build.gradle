@@ -25,8 +25,8 @@ dependencies {
     implementation "com.google.guava:guava:${revGuava}"
     testImplementation "org.springframework:spring-web"
 
-    implementation "redis.clients:jedis:${revJedis}"
-    implementation "com.netflix.dyno-queues:dyno-queues-redis:${revDynoQueues}"
+    //implementation "redis.clients:jedis:${revJedis}"
+    //implementation "com.netflix.dyno-queues:dyno-queues-redis:${revDynoQueues}"
 
 
     testImplementation "org.apache.groovy:groovy-all:${revGroovy}"
@@ -39,10 +39,10 @@ dependencies {
     implementation "org.testcontainers:elasticsearch:${revTestContainer}"
     implementation "org.testcontainers:mysql:${revTestContainer}"
     implementation "org.testcontainers:postgresql:${revTestContainer}"
-    implementation(group: 'com.rabbitmq', name: 'amqp-client'){ version{require "${revAmqpClient}"}}
+    //implementation(group: 'com.rabbitmq', name: 'amqp-client'){ version{require "${revAmqpClient}"}}
 
     //In memory
-    implementation "org.rarefiedredis.redis:redis-java:${revRarefiedRedis}"
+    //implementation "org.rarefiedredis.redis:redis-java:${revRarefiedRedis}"
 
 }
 

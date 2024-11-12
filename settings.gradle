@@ -48,7 +48,7 @@ include 'task-status-listener'
 include 'test-util'
 include 'common-persistence'
 include 'metrics'
-include 'es7-persistence'
+//include 'es7-persistence'
 include 'oracle-persistence'
 
 include 'test-harness'
