@@ -27,7 +27,8 @@ import jakarta.annotation.*;
 
 public class ArchivingWithTTLWorkflowStatusListener implements WorkflowStatusListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ArchivingWithTTLWorkflowStatusListener.class);
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(ArchivingWithTTLWorkflowStatusListener.class);
 
     private final ExecutionDAOFacade executionDAOFacade;
     private final int archiveTTLSeconds;
@@ -42,15 +43,16 @@ public class ArchivingWithTTLWorkflowStatusListener implements WorkflowStatusLis
         this.firstDelayArchiveSeconds = properties.getWorkflowFirstArchivalDelay();
         this.secondDelayArchiveSeconds = properties.getWorkflowSecondArchivalDelay();
 
-        this.scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(
-                properties.getDelayQueueWorkerThreadCount(),
-                (runnable, executor) -> {
-                    LOGGER.warn(
-                            "Request {} to delay archiving index dropped in executor {}",
-                            runnable,
-                            executor);
-                    Monitors.recordDiscardedArchivalCount();
-                });
+        this.scheduledThreadPoolExecutor =
+                new ScheduledThreadPoolExecutor(
+                        properties.getDelayQueueWorkerThreadCount(),
+                        (runnable, executor) -> {
+                            LOGGER.warn(
+                                    "Request {} to delay archiving index dropped in executor {}",
+                                    runnable,
+                                    executor);
+                            Monitors.recordDiscardedArchivalCount();
+                        });
         this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
         LOGGER.warn(
                 "Workflow removal with TTL is no longer supported, "
@@ -66,7 +68,8 @@ public class ArchivingWithTTLWorkflowStatusListener implements WorkflowStatusLis
                     firstDelayArchiveSeconds, TimeUnit.SECONDS)) {
                 LOGGER.debug("tasks completed, shutting down");
             } else {
-                LOGGER.warn("Forcing shutdown after waiting for {} seconds", firstDelayArchiveSeconds);
+                LOGGER.warn(
+                        "Forcing shutdown after waiting for {} seconds", firstDelayArchiveSeconds);
                 scheduledThreadPoolExecutor.shutdownNow();
             }
         } catch (InterruptedException ie) {

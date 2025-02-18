@@ -46,19 +46,15 @@ public class ArchivingWorkflowListenerProperties {
     private String workflowS3ArchivalBucketRegion = "us-east-1";
 
     /**
-     * Set this variable to true if you want to archive only the workflows that
-     * didn't succeed. When
-     * true, only unsuccessful workflows will be archived, while both successful and
-     * unsuccessful
-     * workflows will be deleted from the datastore. This helps manage storage costs
-     * on S3 and keeps
+     * Set this variable to true if you want to archive only the workflows that didn't succeed. When
+     * true, only unsuccessful workflows will be archived, while both successful and unsuccessful
+     * workflows will be deleted from the datastore. This helps manage storage costs on S3 and keeps
      * only the failed workflows for debugging.
      */
     private Boolean workflowArchiveUnsuccessfulOnly = false;
 
     /**
-     * The time to live in seconds for workflow archiving module. Currently, only
-     * RedisExecutionDAO
+     * The time to live in seconds for workflow archiving module. Currently, only RedisExecutionDAO
      * supports this
      */
     @DurationUnit(ChronoUnit.SECONDS)
@@ -126,10 +122,11 @@ public class ArchivingWorkflowListenerProperties {
 
     public int getWorkflowSecondArchivalDelay() {
         int firstDelay = getWorkflowFirstArchivalDelay();
-        int secondDelay = environment.getProperty(
-                "conductor.workflow-status-listener.archival.secondDelaySeconds",
-                Integer.class,
-                0);
+        int secondDelay =
+                environment.getProperty(
+                        "conductor.workflow-status-listener.archival.secondDelaySeconds",
+                        Integer.class,
+                        0);
         return Math.max(firstDelay, secondDelay);
     }
 }
