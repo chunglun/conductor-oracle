@@ -27,30 +27,30 @@ import jakarta.annotation.*;
 
 public class ArchivingWithTTLWorkflowStatusListener implements WorkflowStatusListener {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(ArchivingWithTTLWorkflowStatusListener.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ArchivingWithTTLWorkflowStatusListener.class);
 
     private final ExecutionDAOFacade executionDAOFacade;
     private final int archiveTTLSeconds;
-    private final int delayArchiveSeconds;
+    private final int firstDelayArchiveSeconds;
+    private final int secondDelayArchiveSeconds;
     private final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
     public ArchivingWithTTLWorkflowStatusListener(
             ExecutionDAOFacade executionDAOFacade, ArchivingWorkflowListenerProperties properties) {
         this.executionDAOFacade = executionDAOFacade;
         this.archiveTTLSeconds = (int) properties.getTtlDuration().getSeconds();
-        this.delayArchiveSeconds = properties.getWorkflowArchivalDelay();
+        this.firstDelayArchiveSeconds = properties.getWorkflowFirstArchivalDelay();
+        this.secondDelayArchiveSeconds = properties.getWorkflowSecondArchivalDelay();
 
-        this.scheduledThreadPoolExecutor =
-                new ScheduledThreadPoolExecutor(
-                        properties.getDelayQueueWorkerThreadCount(),
-                        (runnable, executor) -> {
-                            LOGGER.warn(
-                                    "Request {} to delay archiving index dropped in executor {}",
-                                    runnable,
-                                    executor);
-                            Monitors.recordDiscardedArchivalCount();
-                        });
+        this.scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(
+                properties.getDelayQueueWorkerThreadCount(),
+                (runnable, executor) -> {
+                    LOGGER.warn(
+                            "Request {} to delay archiving index dropped in executor {}",
+                            runnable,
+                            executor);
+                    Monitors.recordDiscardedArchivalCount();
+                });
         this.scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
         LOGGER.warn(
                 "Workflow removal with TTL is no longer supported, "
@@ -63,10 +63,10 @@ public class ArchivingWithTTLWorkflowStatusListener implements WorkflowStatusLis
             LOGGER.info("Gracefully shutdown executor service");
             scheduledThreadPoolExecutor.shutdown();
             if (scheduledThreadPoolExecutor.awaitTermination(
-                    delayArchiveSeconds, TimeUnit.SECONDS)) {
+                    firstDelayArchiveSeconds, TimeUnit.SECONDS)) {
                 LOGGER.debug("tasks completed, shutting down");
             } else {
-                LOGGER.warn("Forcing shutdown after waiting for {} seconds", delayArchiveSeconds);
+                LOGGER.warn("Forcing shutdown after waiting for {} seconds", firstDelayArchiveSeconds);
                 scheduledThreadPoolExecutor.shutdownNow();
             }
         } catch (InterruptedException ie) {
@@ -80,10 +80,10 @@ public class ArchivingWithTTLWorkflowStatusListener implements WorkflowStatusLis
     @Override
     public void onWorkflowCompleted(WorkflowModel workflow) {
         LOGGER.info("Archiving workflow {} on completion ", workflow.getWorkflowId());
-        if (delayArchiveSeconds > 0) {
+        if (firstDelayArchiveSeconds > 0) {
             scheduledThreadPoolExecutor.schedule(
                     new DelayArchiveWorkflow(workflow, executionDAOFacade),
-                    delayArchiveSeconds,
+                    firstDelayArchiveSeconds,
                     TimeUnit.SECONDS);
         } else {
             this.executionDAOFacade.removeWorkflow(workflow.getWorkflowId(), true);
@@ -98,10 +98,10 @@ public class ArchivingWithTTLWorkflowStatusListener implements WorkflowStatusLis
                 "workflow {} is not in COMPLETED state ({})",
                 workflow.getWorkflowId(),
                 workflow.getStatus());
-        if (delayArchiveSeconds > 0) {
+        if (secondDelayArchiveSeconds > 0) {
             scheduledThreadPoolExecutor.schedule(
                     new DelayArchiveWorkflow(workflow, executionDAOFacade),
-                    delayArchiveSeconds,
+                    secondDelayArchiveSeconds,
                     TimeUnit.SECONDS);
         } else {
             this.executionDAOFacade.removeWorkflow(workflow.getWorkflowId(), true);
