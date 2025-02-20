@@ -14,13 +14,19 @@ package com.netflix.conductor.client.automator;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -64,6 +70,12 @@ class TaskRunner {
     private volatile boolean pollingAndExecuting = true;
     private final List<PollFilter> pollFilters;
     private final EventDispatcher<TaskRunnerEvent> eventDispatcher;
+    private final LinkedBlockingQueue<Task> tasksTobeExecuted;
+    private final boolean enableUpdateV2;
+    private static final int LEASE_EXTEND_RETRY_COUNT = 3;
+    private static final double LEASE_EXTEND_DURATION_FACTOR = 0.8;
+    private final ScheduledExecutorService leaseExtendExecutorService;
+    private Map<String, ScheduledFuture<?>> leaseExtendMap = new HashMap<>();
 
     TaskRunner(Worker worker,
                TaskClient taskClient,
@@ -83,7 +95,9 @@ class TaskRunner {
         this.permits = new Semaphore(threadCount);
         this.pollFilters = pollFilters;
         this.eventDispatcher = eventDispatcher;
-
+        this.tasksTobeExecuted = new LinkedBlockingQueue<>();
+        this.enableUpdateV2 = Boolean.valueOf(System.getProperty("taskUpdateV2", "false"));
+        LOGGER.info("taskUpdateV2 is set to {}", this.enableUpdateV2);
         //1. Is there a worker level override?
         this.domain = PropertyFactory.getString(taskType, Worker.PROP_DOMAIN, null);
         if (this.domain == null) {
@@ -116,6 +130,15 @@ class TaskRunner {
                 pollingIntervalInMillis,
                 domain);
         LOGGER.info("Polling errors for taskType {} will be printed at every {} occurrence.", taskType, errorAt);
+
+        LOGGER.info("Initialized the task lease extend executor");
+        leaseExtendExecutorService = Executors.newSingleThreadScheduledExecutor(
+            new BasicThreadFactory.Builder()
+                .namingPattern("workflow-lease-extend-%d")
+                .daemon(true)
+                .uncaughtExceptionHandler(uncaughtExceptionHandler)
+                .build()
+        );
     }
 
     public void pollAndExecute() {
@@ -139,7 +162,25 @@ class TaskRunner {
                     LOGGER.trace("Poller for task {} waited for {} ms before getting {} tasks to execute", taskType, stopwatch.elapsed(TimeUnit.MILLISECONDS), tasks.size());
                     stopwatch = null;
                 }
-                tasks.forEach(task -> this.executorService.submit(() -> this.processTask(task)));
+                tasks.forEach(task -> {
+                    Future<Task> taskFuture = this.executorService.submit(() -> this.processTask(task));
+
+                    if (task.getResponseTimeoutSeconds() > 0 && worker.leaseExtendEnabled()) {
+                        ScheduledFuture<?> scheduledFuture = leaseExtendMap.get(task.getTaskId());
+                        if (scheduledFuture != null) {
+                            scheduledFuture.cancel(false);
+                        }
+
+                        long delay = Math.round(task.getResponseTimeoutSeconds() * LEASE_EXTEND_DURATION_FACTOR);
+                        ScheduledFuture<?> leaseExtendFuture = leaseExtendExecutorService.scheduleWithFixedDelay(
+                            extendLease(task, taskFuture),
+                            delay,
+                            delay,
+                            TimeUnit.SECONDS
+                        );
+                        leaseExtendMap.put(task.getTaskId(), leaseExtendFuture);
+                    }
+                });
             } catch (Throwable t) {
                 LOGGER.error(t.getMessage(), t);
             }
@@ -191,7 +232,7 @@ class TaskRunner {
         Stopwatch stopwatch = Stopwatch.createStarted(); //TODO move this to the top?
         try {
             LOGGER.trace("Polling task of type: {} in domain: '{}' with size {}", taskType, domain, pollCount);
-            tasks = pollTask(domain, pollCount);
+            tasks = pollTask(pollCount);
             permits.release(pollCount - tasks.size());        //release extra permits
             stopwatch.stop();
             long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
@@ -222,9 +263,15 @@ class TaskRunner {
         return tasks;
     }
 
-    private List<Task> pollTask(String domain, int count) {
+    private List<Task> pollTask(int count) {
         if (count < 1) {
             return Collections.emptyList();
+        }
+        LOGGER.trace("in memory queue size for tasks: {}", tasksTobeExecuted.size());
+        List<Task> polled = new ArrayList<>(count);
+        tasksTobeExecuted.drainTo(polled, count);
+        if(!polled.isEmpty()) {
+            return polled;
         }
         String workerId = worker.getIdentity();
         LOGGER.debug("poll {} in the domain {} with batch size {}", taskType, domain, count);
@@ -239,7 +286,7 @@ class TaskRunner {
                 LOGGER.error("Uncaught exception. Thread {} will exit now", thread, error);
             };
 
-    private void processTask(Task task) {
+    private Task processTask(Task task) {
         eventDispatcher.publish(new TaskExecutionStarted(taskType, task.getTaskId(), worker.getIdentity()));
         LOGGER.trace("Executing task: {} of type: {} in worker: {} at {}", task.getTaskId(), taskType, worker.getClass().getSimpleName(), worker.getIdentity());
         LOGGER.trace("task {} is getting executed after {} ms of getting polled", task.getTaskId(), (System.currentTimeMillis() - task.getStartTime()));
@@ -259,6 +306,7 @@ class TaskRunner {
         } finally {
             permits.release();
         }
+        return task;
     }
 
     private void executeTask(Worker worker, Task task) {
@@ -328,8 +376,13 @@ class TaskRunner {
                 result.setExternalOutputPayloadStoragePath(optionalExternalStorageLocation.get());
                 result.setOutputData(null);
             }
-
-            retryOperation(
+            if(enableUpdateV2) {
+                Task nextTask = retryOperation(taskClient::updateTaskV2, count, result, "updateTaskV2");
+                if (nextTask != null) {
+                    tasksTobeExecuted.add(nextTask);
+                }
+            } else {
+                retryOperation(
                     (TaskResult taskResult) -> {
                         taskClient.updateTask(taskResult);
                         return null;
@@ -337,6 +390,8 @@ class TaskRunner {
                     count,
                     result,
                     "updateTask");
+            }
+
         } catch (Exception e) {
             worker.onErrorUpdate(task);
             LOGGER.error(
@@ -380,5 +435,31 @@ class TaskRunner {
         t.printStackTrace(new PrintWriter(stringWriter));
         result.log(stringWriter.toString());
         updateTaskResult(updateRetryCount, task, result, worker);
+    }
+
+    private Runnable extendLease(Task task, Future<Task> taskCompletableFuture) {
+        return () -> {
+            if (taskCompletableFuture.isDone()) {
+                LOGGER.warn(
+                    "Task processing for {} completed, but its lease extend was not cancelled",
+                    task.getTaskId());
+                return;
+            }
+            LOGGER.info("Attempting to extend lease for {}", task.getTaskId());
+            try {
+                TaskResult result = new TaskResult(task);
+                result.setExtendLease(true);
+                retryOperation(
+                    (TaskResult taskResult) -> {
+                        taskClient.updateTask(taskResult);
+                        return null;
+                    },
+                    LEASE_EXTEND_RETRY_COUNT,
+                    result,
+                    "extend lease");
+            } catch (Exception e) {
+                LOGGER.error("Failed to extend lease for {}", task.getTaskId(), e);
+            }
+        };
     }
 }

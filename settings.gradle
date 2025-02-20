@@ -61,5 +61,5 @@ include 'es7-persistence'
 
 include 'test-harness'
 
-
 rootProject.children.each {it.name="conductor-${it.name}"}
+
