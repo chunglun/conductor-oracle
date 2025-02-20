@@ -50,7 +50,7 @@ public class ArchivingWorkflowToS3 implements WorkflowStatusListener {
         bucketName = properties.getWorkflowS3ArchivalDefaultBucketName();
         bucketRegion = properties.getWorkflowS3ArchivalBucketRegion();
         s3Client = AmazonS3ClientBuilder.standard().withRegion(bucketRegion).build();
-        this.delayArchiveSeconds = properties.getWorkflowArchivalDelay();
+        this.delayArchiveSeconds = properties.getWorkflowFirstArchivalDelay();
         objectMapper = new ObjectMapper();
         this.scheduledThreadPoolExecutor =
                 new ScheduledThreadPoolExecutor(

@@ -5,7 +5,7 @@ dependencies {
 
     implementation project(':conductor-common')
     implementation project(':conductor-core')
-    implementation project(':conductor-redis-persistence')
+    implementation project(':conductor-oracle-persistence')
     implementation project(':conductor-task-status-listener')
     implementation project(':conductor-annotations')
 
@@ -28,7 +28,7 @@ dependencies {
     testImplementation project(':conductor-test-util').sourceSets.test.output
 
     //In memory
-    implementation "org.rarefiedredis.redis:redis-java:${revRarefiedRedis}"
-    testImplementation "redis.clients:jedis:${revJedis}"
+    //implementation "org.rarefiedredis.redis:redis-java:${revRarefiedRedis}"
+    //testImplementation "redis.clients:jedis:${revJedis}"
 
 }

@@ -5,8 +5,7 @@ dependencies {
     testImplementation project(':conductor-common')
     testImplementation project(':conductor-rest')
     testImplementation project(':conductor-core')
-    testImplementation project(':conductor-redis-persistence')
-    testImplementation project(':conductor-cassandra-persistence')
+    testImplementation project(':conductor-oracle-persistence')
     testImplementation project(':conductor-es7-persistence')
     testImplementation project(':conductor-grpc-server')
     testImplementation project(':conductor-client')
@@ -25,7 +24,7 @@ dependencies {
     testImplementation "com.google.guava:guava:${revGuava}"
     testImplementation "org.springframework:spring-web"
 
-    testImplementation "redis.clients:jedis:${revJedis}"
+    //testImplementation "redis.clients:jedis:${revJedis}"
     testImplementation "com.netflix.dyno-queues:dyno-queues-redis:${revDynoQueues}"
 
     testImplementation "org.apache.groovy:groovy-all:${revGroovy}"

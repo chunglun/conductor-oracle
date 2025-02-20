@@ -72,7 +72,7 @@ public class WorkflowDef extends Auditable {
     private boolean restartable = true;
 
     @ProtoField(id = 10)
-    private boolean workflowStatusListenerEnabled = false;
+    private boolean workflowStatusListenerEnabled = true;
 
     @ProtoField(id = 11)
     @OwnerEmailMandatoryConstraint
