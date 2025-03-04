@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.oracle.config;
 
+import java.beans.BeanProperty;
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -25,6 +26,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
 import org.springframework.retry.RetryContext;
+import org.springframework.retry.backoff.NoBackOffPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
@@ -53,7 +55,6 @@ public class OracleConfiguration {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Bean
-    @DependsOn({"flyway", "flywayInitializer"})
     public MetadataDAO oracleMetadataDAO(
             @Qualifier("oracleRetryTemplate") RetryTemplate retryTemplate,
             ObjectMapper objectMapper,
@@ -64,7 +65,6 @@ public class OracleConfiguration {
     }
 
     @Bean
-    @DependsOn({"flyway", "flywayInitializer"})
     public ExecutionDAO oracleExecutionDAO(
             @Qualifier("oracleRetryTemplate") RetryTemplate retryTemplate,
             ObjectMapper objectMapper,
@@ -74,13 +74,36 @@ public class OracleConfiguration {
     }
 
     @Bean
-    @DependsOn({"flyway", "flywayInitializer"})
     public QueueDAO oracleQueueDAO(
             @Qualifier("oracleRetryTemplate") RetryTemplate retryTemplate,
             ObjectMapper objectMapper,
             DataSource dataSource) {
         logger.info("Initialized Oracle Configuration ...");
         return new OracleQueueDAO(retryTemplate, objectMapper, dataSource);
+    }
+
+    @Bean
+    @CondintionalOnProperty(
+        name = "conductor.workflow-execution-lock.type", 
+        havingValue = "oracle")
+    public OracleLockDAO oracleLockDAO(
+            @Qualifier("oracleRetryTemplate") RetryTemplate retryTemplate,
+            ObjectMapper objectMapper,
+            DataSource dataSource) {
+        logger.info("Initialized Oracle Configuration ...");
+        return new OracleLockDAO(retryTemplate, objectMapper, dataSource);
+    }
+
+    @Bean
+    public RetryTemplate oracleRetryTemplate(OracleProperties properties) {
+        logger.info("Initialized Oracle Configuration ...");
+        SimpleRetryPolicy retryPolicy = new CustomRetryPolicy();
+        retryPolicy.setMaxAttempts(properties.getDeadlockRetryMax());
+
+        RetryTemplate retryTemplate = new RetryTemplate();
+        retryTemplate.setRetryPolicy(retryPolicy);
+        retryTemplate.setBackOffPolicy(new NoBackOffPolicy());
+        return retryTemplate;
     }
 
     public static class CustomRetryPolicy extends SimpleRetryPolicy {
