@@ -83,7 +83,7 @@ public class OracleConfiguration {
     }
 
     @Bean
-    @CondintionalOnProperty(
+    @ConditionalOnProperty(
         name = "conductor.workflow-execution-lock.type", 
         havingValue = "oracle")
     public OracleLockDAO oracleLockDAO(
