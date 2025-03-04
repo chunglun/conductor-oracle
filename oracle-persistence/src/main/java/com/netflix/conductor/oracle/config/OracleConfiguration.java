@@ -12,7 +12,6 @@
  */
 package com.netflix.conductor.oracle.config;
 
-import java.beans.BeanProperty;
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -83,9 +82,7 @@ public class OracleConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(
-        name = "conductor.workflow-execution-lock.type", 
-        havingValue = "oracle")
+    @ConditionalOnProperty(name = "conductor.workflow-execution-lock.type", havingValue = "oracle")
     public OracleLockDAO oracleLockDAO(
             @Qualifier("oracleRetryTemplate") RetryTemplate retryTemplate,
             ObjectMapper objectMapper,
